@@ -43,33 +43,34 @@ let data = addFutureGapDate(stream.take(bars), dateGap);
 
 const xExtent = extentTime().accessors([d => d.date]);
 const yExtent = extentLinear().accessors([d => d.high, d => d.low]);
-// const volumeExtent = extentLinear().include([0])
-//   .pad([0, 2])
-//   .accessors([d => d.volume]);
-
-// const volumeToPriceScale = scaleLinear()
-//   .domain(volumeExtent(data))
-//   .range(yExtent(data));
+const volumeExtent = extentLinear()
+  .include([0])
+  .pad([0, 2])
+  .accessors([d => d.volume]);
 
 const gridlines = annotationSvgGridline();
 const candlestick = seriesSvgCandlestick();
-// const volume = seriesSvgBar()
-//   .bandwidth(2)
-//   .crossValue(d => d.date)
-//   .mainValue(d => volumeToPriceScale(d.volume))
-//   .decorate(sel =>
-//     sel
-//       .enter()
-//       .classed("volume", true)
-//       .attr("fill", d => (d.open > d.close ? "red" : "green"))
-//   )
-// const multi = seriesSvgMulti().series([gridlines, candlestick, volume]);
-const multi = seriesSvgMulti().series([gridlines, candlestick]);
+const volume = seriesSvgBar()
+  .bandwidth(2)
+  .mainValue(d => d.volume)
+  .decorate(sel =>
+    sel
+      .enter()
+      .classed("volume", true)
+      .attr("fill", d => (d.open > d.close ? "red" : "green"))
+  )
 
-const chart = chartCartesian(scaleTime(), scaleLinear())
-  .svgPlotArea(multi)
+const multiMainChart = seriesSvgMulti().series([gridlines, candlestick]);
+const multiVolumeChart = seriesSvgMulti().series([volume]);
+
+const mainChart = chartCartesian(scaleTime(), scaleLinear())
+  .svgPlotArea(multiMainChart)
   .xDomain(xExtent(data))
   .yDomain(yExtent(data));
+const volumeChart = chartCartesian(scaleTime(), scaleLinear())
+  .svgPlotArea(multiVolumeChart)
+  .xDomain(xExtent(data))
+  .yDomain(volumeExtent(data));
 
 function renderChart() {
   let lastDate = data[bars + dateGap - 1].date;
@@ -85,11 +86,16 @@ function renderChart() {
   });
   data.shift();
 
-  chart.yDomain(yExtent(data)).xDomain(xExtent(data));
+  mainChart.xDomain(xExtent(data)).yDomain(yExtent(data));
+  volumeChart.xDomain(xExtent(data)).yDomain(volumeExtent(data));
 
-  select('#chart')
+  select('#main')
     .datum(data)
-    .call(chart);
+    .call(mainChart);
+
+  select('#volume')
+    .datum(data)
+    .call(volumeChart);
 }
 
 renderChart();
