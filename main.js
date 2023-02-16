@@ -18,8 +18,8 @@ import {
 } from 'd3fc';
 import dayjs from 'dayjs';
 
-const bars = 100;
-const dateGap = 10;
+const bars = 150;
+const dateGap = 3;
 
 function addFutureGapDate(data, day) {
   let lastDate = data[bars - 1].date;
@@ -52,12 +52,13 @@ const gridlines = annotationSvgGridline();
 const candlestick = seriesSvgCandlestick();
 const volume = seriesSvgBar()
   .bandwidth(2)
+  .crossValue(d => d.date)
   .mainValue(d => d.volume)
   .decorate(sel =>
     sel
       .enter()
       .classed("volume", true)
-      .attr("fill", d => (d.open > d.close ? "red" : "green"))
+      .attr("fill", d => (d.open > d.close ? "red" : "green")) // warnanya salah tidak mau bergeser
   )
 
 const multiMainChart = seriesSvgMulti().series([gridlines, candlestick]);
